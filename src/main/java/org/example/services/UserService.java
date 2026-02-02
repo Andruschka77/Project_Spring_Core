@@ -28,7 +28,7 @@ public class UserService {
         idCounter++;
         User user = new User(idCounter, login, new ArrayList<>());
         Account account = accountService.createAccount(idCounter);
-        user.setAccountList(account);
+        user.getAccountList().add(account);
         userMap.put(user.getId(), user);
         return user;
     }

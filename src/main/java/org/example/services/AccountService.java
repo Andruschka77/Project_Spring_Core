@@ -95,7 +95,7 @@ public class AccountService {
                 .orElseThrow();
         accountToDeposit.setMoneyAmount(accountToDeposit.getMoneyAmount() + accountToRemove.getMoneyAmount());
         accountMap.remove(accountId);
-        return accountToDeposit;
+        return accountToRemove;
     }
 
 }

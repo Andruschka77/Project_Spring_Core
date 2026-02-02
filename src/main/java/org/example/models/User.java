@@ -30,10 +30,6 @@ public class User {
         return id;
     }
 
-    public void setAccountList(Account account) {
-        accountList.add(account);
-    }
-
     public List<Account> getAccountList() {
         return accountList;
     }

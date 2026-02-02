@@ -29,7 +29,7 @@ public class CreateAccountProcessor implements OperationCommandProcessor {
         User user = userService.findUserById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("No such user: id=%s".formatted(userId)));
         Account account = accountService.createAccount(userId);
-        user.setAccountList(account);
+        user.getAccountList().add(account);
         System.out.printf("\nNew account created with ID: %s for user: %s%n", account.getId(), user.getLogin());
     }
 
