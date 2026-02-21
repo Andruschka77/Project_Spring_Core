@@ -1,11 +1,11 @@
 package org.example.operations.processors;
 
+import org.example.models.User;
 import org.example.operations.ConsoleOperationType;
 import org.example.operations.OperationCommandProcessor;
 import org.example.services.UserService;
 import org.springframework.stereotype.Component;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Component
 public class ShowAllUsersProcessor implements OperationCommandProcessor {
@@ -19,9 +19,7 @@ public class ShowAllUsersProcessor implements OperationCommandProcessor {
     @Override
     public void processOperation() {
         System.out.println("\nList of all users:");
-        List<String> users = userService.getAllUsers().stream()
-                .map(Object::toString)
-                .collect(Collectors.toList());
+        List<User> users = userService.getAllUsers();
         users.forEach(System.out::println);
     }
 

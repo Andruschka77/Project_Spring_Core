@@ -1,23 +1,29 @@
 package org.example.services;
 
+import org.example.TransactionHelper;
 import org.example.models.Account;
 import org.example.models.User;
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
 import org.springframework.stereotype.Service;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 public class UserService {
 
-    private int idCounter;
-    private final Map<Integer, User> userMap;
-    private final AccountService accountService;
-    private final Set<String> takenLogins;
+    private final TransactionHelper transactionHelper;
+    private final SessionFactory sessionFactory;
+    private final AccountProperties accountProperties;
+    private final Set<String> takenLogins = new HashSet<>();
 
-    public UserService(AccountService accountService) {
-        this.accountService = accountService;
-        this.userMap = new HashMap<>();
-        takenLogins = new HashSet<>();
+    public UserService(
+            TransactionHelper transactionHelper,
+            SessionFactory sessionFactory,
+            AccountProperties accountProperties
+    ) {
+        this.transactionHelper = transactionHelper;
+        this.sessionFactory = sessionFactory;
+        this.accountProperties = accountProperties;
     }
 
     public User createUser(String login) {
@@ -25,20 +31,31 @@ public class UserService {
             throw new IllegalArgumentException("Such a login already exists!");
         }
         takenLogins.add(login);
-        idCounter++;
-        User user = new User(idCounter, login, new ArrayList<>());
-        Account account = accountService.createAccount(idCounter);
+        User user = new User(login);
+        Account account = new Account(accountProperties.getDefaultAmount(), user);
         user.getAccountList().add(account);
-        userMap.put(user.getId(), user);
-        return user;
+        return transactionHelper.executeInTransaction(session -> {
+            session.persist(user);
+            session.persist(account);
+            return user;
+        });
     }
 
     public List<User> getAllUsers() {
-        return userMap.values().stream().collect(Collectors.toList());
+        try (Session session = sessionFactory.openSession()) {
+            return session.createQuery("""
+                    SELECT DISTINCT u FROM User u
+                    LEFT JOIN FETCH u.accountList
+                    ORDER BY u.id ASC
+                    """, User.class)
+                    .list();
+        }
     }
 
-    public Optional<User> findUserById(int userId) {
-        return Optional.ofNullable(userMap.get(userId));
+    public Optional<User> findUserById(Long userId) {
+        try (Session session = sessionFactory.openSession()) {
+            return Optional.ofNullable(session.get(User.class, userId));
+        }
     }
 
 }
