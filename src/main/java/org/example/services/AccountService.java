@@ -45,10 +45,10 @@ public class AccountService {
         }
     }
 
-    public List<Account> getAllUserAccounts(int userId) {
+    public List<Account> getAllUserAccounts(Long userId) {
         try (Session session = sessionFactory.openSession()) {
             return session.createQuery("""
-                    SELECT DISTINCT a FROM Account a
+                    SELECT a FROM Account a
                     WHERE a.user.id = :userId
                     """, Account.class)
                     .setParameter("userId", userId)
@@ -58,8 +58,6 @@ public class AccountService {
 
     public void depositAccount(Long accountId, int moneyAmount) {
         transactionHelper.executeInTransaction(session -> {
-            //Account account = findAccountById(accountId)
-                    //.orElseThrow(() -> new IllegalArgumentException("No such account: id=%s".formatted(accountId)));
             Account account = session.get(Account.class, accountId);
             if (account == null) {
                 throw new IllegalArgumentException("No such account: id=%s".formatted(accountId));
@@ -87,43 +85,56 @@ public class AccountService {
             account.setMoneyAmount(account.getMoneyAmount() - moneyAmount);
         });
     }
-//
-//    public void transferAccount(int sendId, int receiveId, int moneyAmount) {
-//        Account sendAccount = findAccountById(sendId)
-//                .orElseThrow(() -> new IllegalArgumentException("No such account: id=%s".formatted(sendId)));
-//        Account receiveAccount = findAccountById(receiveId)
-//                .orElseThrow(() -> new IllegalArgumentException("No such account: id=%s".formatted(receiveId)));
-//        if (moneyAmount <= 0) {
-//            throw new IllegalArgumentException("Cannot transfer not positive amount: moneyAmount=%s"
-//                    .formatted(moneyAmount));
-//        }
-//        if (sendAccount.getMoneyAmount() < moneyAmount) {
-//            throw new IllegalArgumentException(
-//                    "Cannot withdraw from account: id=%s, moneyAmount=%s, attemptedWithdraw=%s"
-//                            .formatted(sendId, sendAccount.getMoneyAmount(), moneyAmount)
-//            );
-//        }
-//        int totalAmount = sendAccount.getUserId() != receiveAccount.getUserId()
-//                ? (int) (moneyAmount * (1 - accountProperties.getTransferCommission()))
-//                : moneyAmount;
-//        sendAccount.setMoneyAmount(sendAccount.getMoneyAmount() - moneyAmount);
-//        receiveAccount.setMoneyAmount(receiveAccount.getMoneyAmount() + totalAmount);
-//    }
-//
-//    public Account closeAccount(int accountId) {
-//        Account accountToRemove = findAccountById(accountId)
-//                .orElseThrow(() -> new IllegalArgumentException("No such account: id=%s".formatted(accountId)));
-//        List<Account> accountList = getAllUserAccounts(accountToRemove.getUserId());
-//        if (accountList.size() == 1) {
-//            throw new IllegalArgumentException("Cannot close the only one account");
-//        }
-//        Account accountToDeposit = accountList.stream()
-//                .filter(x -> x.getId() != accountId)
-//                .findFirst()
-//                .orElseThrow();
-//        accountToDeposit.setMoneyAmount(accountToDeposit.getMoneyAmount() + accountToRemove.getMoneyAmount());
-//        accountMap.remove(accountId);
-//        return accountToRemove;
-//    }
+
+    public void transferAccount(Long sendId, Long receiveId, int moneyAmount) {
+        transactionHelper.executeInTransaction(session -> {
+            Account sendAccount = session.get(Account.class, sendId);
+            Account receiveAccount = session.get(Account.class, receiveId);
+            if (sendAccount == null || receiveAccount == null) {
+                throw new IllegalArgumentException("No such account: id=%s"
+                        .formatted(sendAccount == null ? sendId : receiveId));
+            }
+            if (moneyAmount <= 0) {
+                throw new IllegalArgumentException("Cannot transfer not positive amount: moneyAmount=%s"
+                        .formatted(moneyAmount));
+            }
+            if (sendAccount.getMoneyAmount() < moneyAmount) {
+                throw new IllegalArgumentException(
+                        "Cannot withdraw from account: id=%s, moneyAmount=%s, attemptedWithdraw=%s"
+                                .formatted(sendId, sendAccount.getMoneyAmount(), moneyAmount)
+                );
+            }
+            int totalAmount = sendAccount.getUserId() != receiveAccount.getUserId()
+                    ? (int) (moneyAmount * (1 - accountProperties.getTransferCommission()))
+                    : moneyAmount;
+            sendAccount.setMoneyAmount(sendAccount.getMoneyAmount() - moneyAmount);
+            receiveAccount.setMoneyAmount(receiveAccount.getMoneyAmount() + totalAmount);
+        });
+    }
+
+    public Account closeAccount(Long accountId) {
+        return transactionHelper.executeInTransaction(session -> {
+            Account accountToRemove = session.get(Account.class, accountId);
+            if (accountToRemove == null) {
+                throw new IllegalArgumentException("No such account: id=%s".formatted(accountId));
+            }
+            List<Account> accountList = session.createQuery("""
+                    SELECT a FROM Account a
+                    WHERE a.user.id = :userId
+                    """, Account.class)
+                    .setParameter("userId", accountToRemove.getUserId())
+                    .list();
+            if (accountList.size() == 1) {
+                throw new IllegalArgumentException("Cannot close the only one account");
+            }
+            Account accountToDeposit = accountList.stream()
+                    .filter(x -> x.getId() != accountId)
+                    .findFirst()
+                    .orElseThrow();
+            accountToDeposit.setMoneyAmount(accountToDeposit.getMoneyAmount() + accountToRemove.getMoneyAmount());
+            session.remove(accountToRemove);
+            return accountToRemove;
+        });
+    }
 
 }

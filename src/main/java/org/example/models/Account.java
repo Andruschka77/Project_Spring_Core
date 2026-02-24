@@ -41,4 +41,8 @@ public class Account {
         return moneyAmount;
     }
 
+    public Long getUserId() {
+        return user.getId();
+    }
+
 }
