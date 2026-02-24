@@ -13,7 +13,7 @@ public class Account {
     @Column(name = "account_moneyAmount", nullable = false)
     private int moneyAmount;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id", referencedColumnName = "id")
     private User user;
 

@@ -27,7 +27,11 @@ public class TransactionHelper {
             session.getTransaction().commit();
         } catch (Exception e) {
             if (transaction != null) {
-                transaction.rollback();
+                try {
+                    transaction.rollback();
+                } catch (Exception rollbackEx) {
+                    e.addSuppressed(rollbackEx);
+                }
             }
             throw e;
         }
@@ -44,7 +48,11 @@ public class TransactionHelper {
             return result;
         } catch (Exception e) {
             if (transaction != null) {
-                transaction.rollback();
+                try {
+                    transaction.rollback();
+                } catch (Exception rollbackEx) {
+                    e.addSuppressed(rollbackEx);
+                }
             }
             throw e;
         }

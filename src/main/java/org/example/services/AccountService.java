@@ -6,6 +6,8 @@ import org.example.models.User;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -42,35 +44,49 @@ public class AccountService {
             return Optional.ofNullable(session.get(Account.class, accountId));
         }
     }
-//
-//    public List<Account> getAllUserAccounts(int userId) {
-//        return accountMap.values()
-//                .stream()
-//                .filter(x -> x.getUserId() == userId)
-//                .collect(Collectors.toList());
-//    }
-//
-//    public void depositAccount(int accountId, int moneyAmount) {
-//        Account account = findAccountById(accountId)
-//                .orElseThrow(() -> new IllegalArgumentException("No such account: id=%s".formatted(accountId)));
-//        account.setMoneyAmount(account.getMoneyAmount() + moneyAmount);
-//    }
-//
-//    public void withdrawAccount(int accountId, int moneyAmount) {
-//        Account account = findAccountById(accountId)
-//                .orElseThrow(() -> new IllegalArgumentException("No such account: id=%s".formatted(accountId)));
-//        if (moneyAmount <= 0) {
-//            throw new IllegalArgumentException("Cannot withdraw negative money amount: id=%s"
-//                    .formatted(accountId));
-//        }
-//        if (account.getMoneyAmount() < moneyAmount) {
-//            throw new IllegalArgumentException(
-//                    "Cannot withdraw from account: id=%s, moneyAmount=%s, attemptedWithdraw=%s"
-//                            .formatted(accountId, account.getMoneyAmount(), moneyAmount)
-//            );
-//        }
-//        account.setMoneyAmount(account.getMoneyAmount() - moneyAmount);
-//    }
+
+    public List<Account> getAllUserAccounts(int userId) {
+        try (Session session = sessionFactory.openSession()) {
+            return session.createQuery("""
+                    SELECT DISTINCT a FROM Account a
+                    WHERE a.user.id = :userId
+                    """, Account.class)
+                    .setParameter("userId", userId)
+                    .list();
+        }
+    }
+
+    public void depositAccount(Long accountId, int moneyAmount) {
+        transactionHelper.executeInTransaction(session -> {
+            //Account account = findAccountById(accountId)
+                    //.orElseThrow(() -> new IllegalArgumentException("No such account: id=%s".formatted(accountId)));
+            Account account = session.get(Account.class, accountId);
+            if (account == null) {
+                throw new IllegalArgumentException("No such account: id=%s".formatted(accountId));
+            }
+            account.setMoneyAmount(account.getMoneyAmount() + moneyAmount);
+        });
+    }
+
+    public void withdrawAccount(Long accountId, int moneyAmount) {
+        transactionHelper.executeInTransaction(session -> {
+            Account account = session.get(Account.class, accountId);
+            if (account == null) {
+                throw new IllegalArgumentException("No such account: id=%s".formatted(accountId));
+            }
+            if (moneyAmount <= 0) {
+                throw new IllegalArgumentException("Cannot withdraw negative money amount: id=%s"
+                        .formatted(accountId));
+            }
+            if (account.getMoneyAmount() < moneyAmount) {
+                throw new IllegalArgumentException(
+                        "Cannot withdraw from account: id=%s, moneyAmount=%s, attemptedWithdraw=%s"
+                                .formatted(accountId, account.getMoneyAmount(), moneyAmount)
+                );
+            }
+            account.setMoneyAmount(account.getMoneyAmount() - moneyAmount);
+        });
+    }
 //
 //    public void transferAccount(int sendId, int receiveId, int moneyAmount) {
 //        Account sendAccount = findAccountById(sendId)

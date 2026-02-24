@@ -57,7 +57,7 @@ public class OperationsConsoleListener {
         try {
             OperationCommandProcessor processor = processorMap.get(operationType);
             processor.processOperation();
-        } catch(Exception e) {
+        } catch (Exception e) {
             System.out.printf(
                     "\nError executing command %s: error=%s%n",
                     operationType,
