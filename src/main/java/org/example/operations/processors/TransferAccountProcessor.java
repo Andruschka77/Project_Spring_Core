@@ -23,9 +23,9 @@ public class TransferAccountProcessor implements OperationCommandProcessor {
     @Override
     public void processOperation() {
         System.out.print("\nEnter source account ID: ");
-        int sendId = Integer.parseInt(scanner.nextLine());
+        Long sendId = Long.parseLong(scanner.nextLine());
         System.out.print("Enter target account ID: ");
-        int receiveId = Integer.parseInt(scanner.nextLine());
+        Long receiveId = Long.parseLong(scanner.nextLine());
         System.out.print("Enter amount to transfer: ");
         int moneyAmount = Integer.parseInt(scanner.nextLine());
         accountService.transferAccount(sendId, receiveId, moneyAmount);

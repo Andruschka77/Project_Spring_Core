@@ -1,32 +1,39 @@
 package org.example.models;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
+import javax.persistence.*;
 
+@Entity
+@Table(name = "users")
 public class User {
 
-    private final int id;
-    private final String login;
-    private final List<Account> accountList;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-    public User(int id, String login, List<Account> accountList) {
-        this.id = id;
+    @Column(name = "user_login", unique = true, nullable = false)
+    private String login;
+
+    @OneToMany(mappedBy = "user", fetch = FetchType.EAGER)
+    private List<Account> accountList = new ArrayList<>();
+
+    public User() {}
+
+    public User(String login) {
         this.login = login;
-        this.accountList = accountList;
     }
 
     @Override
     public String toString() {
-        return "User{" + "id=" + id + ", login='" + login + "', accountList=" +
-                accountList.stream().map(Object::toString).collect(Collectors.toList())
-                + "}";
+        return "User{" + "id=" + id + ", login='" + login + "', accountList=" + accountList + "}";
     }
 
     public String getLogin() {
         return login;
     }
 
-    public int getId() {
+    public Long getId() {
         return id;
     }
 

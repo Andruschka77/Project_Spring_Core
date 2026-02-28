@@ -1,28 +1,36 @@
 package org.example.models;
 
+import javax.persistence.*;
+
+@Entity
+@Table(name = "accounts")
 public class Account {
 
-    private final int id;
-    private final int userId;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(name = "account_moneyAmount", nullable = false)
     private int moneyAmount;
 
-    public Account(int id, int userId, int moneyAmount) {
-        this.id = id;
-        this.userId = userId;
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "user_id", referencedColumnName = "id")
+    private User user;
+
+    public Account() {}
+
+    public Account(int moneyAmount, User user) {
         this.moneyAmount = moneyAmount;
+        this.user = user;
     }
 
     @Override
     public String toString() {
-        return "Account{id=" + id + ", userId=" + userId + ", moneyAmount=" + moneyAmount + "}";
+        return "Account{id=" + id + ", userId=" + user.getId() + ", moneyAmount=" + moneyAmount + "}";
     }
 
-    public int getId() {
+    public Long getId() {
         return id;
-    }
-
-    public int getUserId() {
-        return userId;
     }
 
     public void setMoneyAmount(int moneyAmount) {
@@ -31,6 +39,10 @@ public class Account {
 
     public int getMoneyAmount() {
         return moneyAmount;
+    }
+
+    public Long getUserId() {
+        return user.getId();
     }
 
 }

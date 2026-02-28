@@ -25,11 +25,10 @@ public class CloseAccountProcessor implements OperationCommandProcessor {
     @Override
     public void processOperation() {
         System.out.print("\nEnter account ID to close: ");
-        int accountId = Integer.parseInt(scanner.nextLine());
+        Long accountId = Long.parseLong(scanner.nextLine());
         Account account = accountService.closeAccount(accountId);
         User user = userService.findUserById(account.getUserId())
-                .orElseThrow(() -> new IllegalArgumentException("No such user: id=%s"
-                        .formatted(account.getUserId())));
+                .orElseThrow(() -> new IllegalArgumentException("No such user: id=%s".formatted(account.getUserId())));
         user.getAccountList().remove(account);
         System.out.printf("\nAccount with ID %s has been closed%n", accountId);
     }
