@@ -1,2 +1,2 @@
 ## Mini Banking App ##
-A console application that implements a small bank functionality. The project uses PostgreSQL for data storage. The application itself is designed to be understood by Spring Core and Hibernate Core.
+Консольное приложение, реализующее небольшой банковский функционал. В проекте используется PostgreSQL для хранения данных. Само приложение разработано на чистом Spring Core и Hibernate Core.
